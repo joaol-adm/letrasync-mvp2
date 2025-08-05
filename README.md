@@ -1,10 +1,11 @@
-# LetraSync Karaokê PWA v23
+# LetraSync Karaokê PWA v23.1
 
 Versão com:
 - Botão de microfone
-- Indicador de status (Inativo / Aguardando / Captando)
+- Status do microfone (Inativo / Aguardando / Captando)
 - Barra de volume
-- Efeito visual (círculo pulsando nas batidas)
+- Círculo pulsante no canto superior direito
+- Correção para habilitar câmera para leitura de QR Code no Safari iOS
 
 ## Como usar no GitHub Pages:
 1. Coloque o modelo Vosk EN small descompactado na pasta `vosk-model-en/`.

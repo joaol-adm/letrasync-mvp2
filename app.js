@@ -1,6 +1,7 @@
 const currentModel = "vosk-model-en";
 let lyrics = [], currentLine = 0, timer = null, interval = 3000;
 let audioContext, analyser, microphone, dataArray;
+let html5QrCode;
 
 const lyricsEl = document.getElementById("lyrics");
 const volumeMeter = document.getElementById("volumeMeter");
@@ -43,6 +44,31 @@ function monitorVolume() {
   requestAnimationFrame(monitorVolume);
 }
 
+function startQRScanner() {
+  if (html5QrCode) html5QrCode.stop();
+  html5QrCode = new Html5Qrcode("reader");
+  html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 200 },
+    async (decodedText) => { html5QrCode.stop(); await loadLyrics(decodedText); },
+    (err) => console.warn(`QR Scan error: ${err}`)
+  );
+}
+
+async function loadLyrics(url) {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("Erro ao carregar");
+    const text = await res.text();
+    lyrics = text.split("\n").filter(line => line.trim() !== "");
+    currentLine = 0;
+    document.getElementById("restartBtn").style.display = "none";
+    document.getElementById("scanAgainBtn").style.display = "none";
+    renderLyrics();
+  } catch {
+    lyricsEl.textContent = "❌ Não foi possível carregar a letra.";
+    document.getElementById("scanAgainBtn").style.display = "inline-block";
+  }
+}
+
 function renderLyrics() {
   lyricsEl.innerHTML = "";
   lyrics.forEach((line, i) => {
@@ -66,6 +92,7 @@ function nextLine() {
 }
 
 document.getElementById("micBtn").onclick = enableMic;
+document.getElementById("startQRBtn").onclick = startQRScanner;
 document.getElementById("playPauseBtn").onclick = () => {
   if (timer) {
     clearInterval(timer);

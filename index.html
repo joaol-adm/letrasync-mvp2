@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <link rel="manifest" href="manifest.json" />
-  <title>LetraSync Karaokê v23</title>
+  <title>LetraSync Karaokê v23.1</title>
   <style>
     body { font-family: sans-serif; text-align: center; background: #111; color: #fff; margin: 0; padding-bottom: 180px; }
     .line { opacity: 0.4; cursor: pointer; padding: 0.3rem; transition: 0.3s; }
@@ -16,16 +16,19 @@
     #volumeMeter { height: 100%; width: 0%; background: lime; transition: width 0.1s linear; }
     #micStatus { font-size: 0.9rem; margin-top: 5px; color: yellow; }
     #beatCircle {
+      position: fixed; top: 10px; right: 10px;
       width: 20px; height: 20px;
       background: red; border-radius: 50%;
-      margin-top: 5px; transition: transform 0.1s ease, opacity 0.1s ease;
-      opacity: 0.5;
+      transition: transform 0.1s ease, opacity 0.1s ease;
+      opacity: 0.5; z-index: 999;
     }
     #beatCircle.active { transform: scale(1.5); opacity: 1; }
+    #reader { width: 100%; max-width: 300px; margin: auto; margin-top: 10px; }
   </style>
 </head>
 <body>
-  <h1>LetraSync Karaokê v23</h1>
+  <h1>LetraSync Karaokê v23.1</h1>
+  <div id="beatCircle"></div>
   <div id="reader"></div>
   <div id="lyrics"></div>
   <div id="controls">
@@ -33,12 +36,12 @@
       <button id="micBtn">🎤 Microfone</button>
       <div id="volumeMeterContainer"><div id="volumeMeter"></div></div>
       <div id="micStatus">⚠️ Microfone inativo</div>
-      <div id="beatCircle"></div>
     </div>
     <div>
+      <button id="startQRBtn">📷 Ler QR</button>
       <button id="playPauseBtn">▶️</button>
       <button id="nextBtn">⏭</button>
-      <button id="scanAgainBtn" style="display:none;">📷 Ler QR</button>
+      <button id="scanAgainBtn" style="display:none;">📷 Ler QR Novamente</button>
       <button id="restartBtn" style="display:none;">🔄</button>
     </div>
     <label>Velocidade: <input type="range" id="speedSlider" min="1" max="10" value="3"><span id="speedValue">3s</span></label>
