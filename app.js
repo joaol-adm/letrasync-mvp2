@@ -1,6 +1,7 @@
 const currentModel = "vosk-model-en";
 let lyrics = [], currentLine = 0, timer = null, interval = 3000;
-let audioContext, analyser, microphone, dataArray;
+let audioContext, analyser, microphone, dataArray, recognizer, model;
+let sensitivityThreshold = 5;
 let html5QrCode;
 
 const lyricsEl = document.getElementById("lyrics");
@@ -19,19 +20,21 @@ async function enableMic() {
     microphone = audioContext.createMediaStreamSource(stream);
     microphone.connect(analyser);
     dataArray = new Uint8Array(analyser.frequencyBinCount);
+    if (!model) {
+      model = await Vosk.createModel(`./${currentModel}/`);
+      recognizer = new model.Recognizer();
+    }
     micStatus.textContent = "⏳ Aguardando som...";
-    monitorVolume();
+    processMic();
   } catch (e) {
     micStatus.textContent = "❌ Erro ao acessar microfone";
   }
 }
 
-function monitorVolume() {
+function processMic() {
   analyser.getByteTimeDomainData(dataArray);
   let sum = 0;
-  for (let i = 0; i < dataArray.length; i++) {
-    sum += Math.abs(dataArray[i] - 128);
-  }
+  for (let i = 0; i < dataArray.length; i++) sum += Math.abs(dataArray[i] - 128);
   let volume = sum / dataArray.length;
   volumeMeter.style.width = Math.min(100, volume * 5) + "%";
   if (volume > 5) {
@@ -41,7 +44,18 @@ function monitorVolume() {
   } else {
     micStatus.textContent = "⏳ Aguardando som...";
   }
-  requestAnimationFrame(monitorVolume);
+  requestAnimationFrame(processMic);
+}
+
+function processRecognition(audioData) {
+  const textResult = recognizer.acceptWaveform(audioData);
+  if (textResult) {
+    const recognized = recognizer.result().text.toLowerCase();
+    const currentLyric = lyrics[currentLine]?.toLowerCase();
+    if (recognized && currentLyric && recognized.includes(currentLyric.split(" ")[0])) {
+      if (sensitivityThreshold <= 5) nextLine();
+    }
+  }
 }
 
 function startQRScanner() {
@@ -61,11 +75,9 @@ async function loadLyrics(url) {
     lyrics = text.split("\n").filter(line => line.trim() !== "");
     currentLine = 0;
     document.getElementById("restartBtn").style.display = "none";
-    document.getElementById("scanAgainBtn").style.display = "none";
     renderLyrics();
   } catch {
     lyricsEl.textContent = "❌ Não foi possível carregar a letra.";
-    document.getElementById("scanAgainBtn").style.display = "inline-block";
   }
 }
 
@@ -87,7 +99,6 @@ function nextLine() {
   } else {
     clearInterval(timer);
     document.getElementById("restartBtn").style.display = "inline-block";
-    document.getElementById("scanAgainBtn").style.display = "inline-block";
   }
 }
 
@@ -104,10 +115,14 @@ document.getElementById("playPauseBtn").onclick = () => {
   }
 };
 document.getElementById("nextBtn").onclick = nextLine;
-document.getElementById("restartBtn").onclick = () => { currentLine = 0; renderLyrics(); };
+document.getElementById("restartBtn").onclick = () => { currentLine = 0; renderLyrics(); window.scrollTo({ top: 0, behavior: "smooth" }); };
 document.getElementById("speedSlider").oninput = e => {
   interval = e.target.value * 1000;
   document.getElementById("speedValue").textContent = e.target.value + "s";
+};
+document.getElementById("sensitivitySlider").oninput = e => {
+  sensitivityThreshold = parseInt(e.target.value);
+  document.getElementById("sensitivityValue").textContent = sensitivityThreshold;
 };
 
 window.addEventListener("load", () => {
