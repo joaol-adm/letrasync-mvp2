@@ -4,12 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <link rel="manifest" href="manifest.json" />
-  <title>LetraSync Karaokê v22</title>
+  <title>LetraSync Karaokê v22-mic</title>
   <style>
     body {
       font-family: sans-serif;
       margin: 0;
-      padding-bottom: 160px;
+      padding-bottom: 180px;
       background: var(--bg-color);
       color: var(--text-color);
       transition: background 0.3s, color 0.3s;
@@ -66,6 +66,20 @@
     }
     [data-theme="light"] button:hover { background: #bbb; }
     input[type=range] { width: 90px; }
+    #volumeMeterContainer {
+      width: 100px;
+      height: 10px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 5px;
+      overflow: hidden;
+      margin: 5px auto;
+    }
+    #volumeMeter {
+      height: 100%;
+      width: 0%;
+      background: lime;
+      transition: width 0.1s linear;
+    }
     #endMsg {
       opacity: 0;
       transition: opacity 0.8s ease;
@@ -82,11 +96,15 @@
   </style>
 </head>
 <body data-theme="dark">
-  <h1>LetraSync Karaokê v22</h1>
+  <h1>LetraSync Karaokê v22-mic</h1>
   <button id="themeToggle">🌙/☀️</button>
   <div id="reader"></div>
   <div id="lyrics"></div>
   <div id="controls">
+    <div class="controls-row">
+      <button id="micBtn">🎤 Microfone</button>
+      <div id="volumeMeterContainer"><div id="volumeMeter"></div></div>
+    </div>
     <div class="controls-row">
       <button id="playPauseBtn">▶️</button>
       <button id="nextBtn">⏭</button>

@@ -1,13 +1,11 @@
-const currentModel = "vosk-model-en"; 
-// 🔄 FUTURO: Auto Language Detection
-// Na versão v23+ será implementada lógica para detectar idioma da letra carregada
-// e alternar automaticamente entre "vosk-model-en" e "vosk-model-pt".
+const currentModel = "vosk-model-en";
 
 let lyrics = [];
 let currentLine = 0;
 let timer = null;
 let interval = 3000;
 let recognizer;
+let audioContext, analyser, microphone, dataArray;
 
 const lyricsEl = document.getElementById("lyrics");
 const playPauseBtn = document.getElementById("playPauseBtn");
@@ -18,31 +16,41 @@ const adjustBtn = document.getElementById("adjustBtn");
 const endMsg = document.getElementById("endMsg");
 const speedSlider = document.getElementById("speedSlider");
 const themeToggle = document.getElementById("themeToggle");
+const micBtn = document.getElementById("micBtn");
+const volumeMeter = document.getElementById("volumeMeter");
 
 let html5QrCode;
 
 async function startVosk() {
   const model = await Vosk.createModel(`./${currentModel}/`);
   recognizer = new model.Recognizer();
-  navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-    const audioContext = new AudioContext();
-    const source = audioContext.createMediaStreamSource(stream);
-    const processor = audioContext.createScriptProcessor(4096, 1, 1);
-    source.connect(processor);
-    processor.connect(audioContext.destination);
-    processor.onaudioprocess = e => {
-      recognizer.acceptWaveform(e.inputBuffer.getChannelData(0));
-      const result = recognizer.finalResult();
-      if (result && result.text) checkLyrics(result.text);
-    };
-  });
 }
 
-function checkLyrics(recognizedText) {
-  const currentLineText = lyrics[currentLine]?.toLowerCase() || "";
-  if (recognizedText.includes(currentLineText.split(" ")[0])) {
-    nextLine();
+async function enableMic() {
+  try {
+    await startVosk();
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    await audioContext.resume();
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    analyser = audioContext.createAnalyser();
+    microphone = audioContext.createMediaStreamSource(stream);
+    microphone.connect(analyser);
+    dataArray = new Uint8Array(analyser.frequencyBinCount);
+    processMic();
+  } catch (err) {
+    alert("Erro ao acessar microfone: " + err);
   }
+}
+
+function processMic() {
+  analyser.getByteTimeDomainData(dataArray);
+  let sum = 0;
+  for (let i = 0; i < dataArray.length; i++) {
+    sum += Math.abs(dataArray[i] - 128);
+  }
+  let volume = sum / dataArray.length;
+  volumeMeter.style.width = Math.min(100, volume * 5) + "%";
+  requestAnimationFrame(processMic);
 }
 
 function startQRScanner() {
@@ -63,7 +71,6 @@ async function loadLyrics(url) {
     scanAgainBtn.style.display = "none";
     hideEndMsg();
     renderLyrics();
-    await startVosk();
   } catch {
     lyricsEl.textContent = "❌ Não foi possível carregar a letra.";
     scanAgainBtn.style.display = "inline-block";
@@ -137,6 +144,8 @@ function scanAgain() {
 themeToggle.addEventListener("click", () => {
   document.body.dataset.theme = document.body.dataset.theme === "light" ? "dark" : "light";
 });
+
+micBtn.addEventListener("click", enableMic);
 
 speedSlider.addEventListener("input", () => {
   interval = speedSlider.value * 1000;
