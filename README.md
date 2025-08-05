@@ -1,19 +1,12 @@
-# LetraSync Karaokê PWA v22-mic
+# LetraSync Karaokê PWA v23
 
-Esta versão inclui botão de microfone para iPhone e indicador de volume de áudio.
+Versão com:
+- Botão de microfone
+- Indicador de status (Inativo / Aguardando / Captando)
+- Barra de volume
+- Efeito visual (círculo pulsando nas batidas)
 
-## Estrutura
-- `index.html`: Página principal PWA
-- `app.js`: Lógica principal (sincronização, QR code, Vosk, microfone)
-- `vosk-model-en/`: Adicione aqui o conteúdo do modelo EN small
-- `vosk-model-pt/`: Pasta vazia (para modelo PT-BR no futuro)
-- `manifest.json` e `sw.js`: Configurações PWA
-- Ícones: `icon-192.png` e `icon-512.png`
-
-## Alterar Modelo
-No `app.js`:
-```javascript
-const currentModel = "vosk-model-en";
-// Futuro:
-// const currentModel = "vosk-model-pt";
-```
+## Como usar no GitHub Pages:
+1. Coloque o modelo Vosk EN small descompactado na pasta `vosk-model-en/`.
+2. Certifique-se de que `am/`, `conf/`, `graph/` estão diretamente dentro dela.
+3. Suba tudo no GitHub e ative GitHub Pages.
