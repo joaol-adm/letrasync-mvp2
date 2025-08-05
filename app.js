@@ -5,6 +5,12 @@ let sensitivityThreshold = 5;
 let html5QrCode;
 let modelReady = false;
 
+const requiredFiles = [
+  "conf/mfcc.conf",
+  "am/final.mdl",
+  "graph/HCLG.fst"
+];
+
 const lyricsEl = document.getElementById("lyrics");
 const volumeMeter = document.getElementById("volumeMeter");
 const micStatus = document.getElementById("micStatus");
@@ -32,10 +38,9 @@ async function enableMic() {
     microphone = audioContext.createMediaStreamSource(stream);
     microphone.connect(analyser);
     dataArray = new Uint8Array(analyser.frequencyBinCount);
-    micStatus.textContent = "🎤 Microfone ativo - iniciando modelo...";
-    logMessage("📦 Iniciando carregamento do modelo...");
-    showProgress(0);
-    loadModel();
+    micStatus.textContent = "🎤 Microfone ativo - verificando modelo...";
+    logMessage("📂 Verificando modelo...");
+    validateModel();
     processMic();
   } catch (e) {
     micStatus.textContent = "❌ Erro ao acessar microfone";
@@ -43,17 +48,43 @@ async function enableMic() {
   }
 }
 
-function showProgress(percent) {
+function showProgress(percent, text) {
   progressContainer.style.display = "block";
   progressBar.style.width = percent + "%";
-  progressText.textContent = "Carregando modelo: " + percent + "%";
+  progressText.textContent = text + " " + percent + "%";
+}
+
+async function validateModel() {
+  let allFound = true;
+  for (const file of requiredFiles) {
+    try {
+      const res = await fetch(`./${currentModel}/${file}`);
+      if (!res.ok) {
+        logMessage(`⚠️ ${file} Faltando`);
+        allFound = false;
+      } else {
+        logMessage(`✅ ${file} OK`);
+      }
+    } catch {
+      logMessage(`⚠️ ${file} Erro ao verificar`);
+      allFound = false;
+    }
+  }
+  if (!allFound) {
+    micStatus.textContent = "❌ Modelo incompleto";
+    logMessage("❌ Modelo incompleto - verifique arquivos");
+    return;
+  }
+  logMessage("📦 Modelo completo. Carregando...");
+  showProgress(0, "Carregando modelo");
+  loadModel();
 }
 
 async function loadModel() {
   try {
     for (let p = 0; p <= 100; p += 10) {
-      showProgress(p);
-      await new Promise(r => setTimeout(r, 200));
+      showProgress(p, "Carregando modelo");
+      await new Promise(r => setTimeout(r, 150));
     }
     model = await Vosk.createModel(`./${currentModel}/`);
     recognizer = new model.Recognizer();
