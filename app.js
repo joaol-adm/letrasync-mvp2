@@ -7,27 +7,38 @@ let html5QrCode;
 const lyricsEl = document.getElementById("lyrics");
 const volumeMeter = document.getElementById("volumeMeter");
 const micStatus = document.getElementById("micStatus");
+const logStatus = document.getElementById("logStatus");
 const beatCircle = document.getElementById("beatCircle");
+
+function logMessage(msg) {
+  logStatus.textContent += "\n" + msg;
+  logStatus.scrollTop = logStatus.scrollHeight;
+}
 
 async function enableMic() {
   try {
+    logMessage("🎤 Solicitando permissão para microfone...");
     if (!audioContext) {
       audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      await audioContext.resume();
     }
+    await audioContext.resume();
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     analyser = audioContext.createAnalyser();
     microphone = audioContext.createMediaStreamSource(stream);
     microphone.connect(analyser);
     dataArray = new Uint8Array(analyser.frequencyBinCount);
+    micStatus.textContent = "🎤 Microfone ativo - aguardando modelo...";
+    logMessage("📦 Carregando modelo...");
     if (!model) {
       model = await Vosk.createModel(`./${currentModel}/`);
       recognizer = new model.Recognizer();
+      logMessage("✅ Modelo carregado!");
     }
-    micStatus.textContent = "⏳ Aguardando som...";
     processMic();
+    startRecognitionTest();
   } catch (e) {
     micStatus.textContent = "❌ Erro ao acessar microfone";
+    logMessage("Erro: " + e.message);
   }
 }
 
@@ -47,14 +58,30 @@ function processMic() {
   requestAnimationFrame(processMic);
 }
 
-function processRecognition(audioData) {
-  const textResult = recognizer.acceptWaveform(audioData);
-  if (textResult) {
-    const recognized = recognizer.result().text.toLowerCase();
-    const currentLyric = lyrics[currentLine]?.toLowerCase();
-    if (recognized && currentLyric && recognized.includes(currentLyric.split(" ")[0])) {
-      if (sensitivityThreshold <= 5) nextLine();
+function startRecognitionTest() {
+  logMessage("🔍 Teste de reconhecimento iniciado...");
+  setInterval(() => {
+    try {
+      const textResult = recognizer.result().text;
+      if (textResult) {
+        logMessage("Reconhecido: " + textResult);
+      }
+    } catch (err) {
+      logMessage("Erro no reconhecimento: " + err.message);
     }
+  }, 2000);
+}
+
+function manualTestRecognition() {
+  try {
+    const textResult = recognizer.result().text;
+    if (textResult) {
+      logMessage("📝 Teste Manual: " + textResult);
+    } else {
+      logMessage("📝 Teste Manual: Nenhum texto reconhecido");
+    }
+  } catch (err) {
+    logMessage("Erro no teste manual: " + err.message);
   }
 }
 
@@ -104,6 +131,7 @@ function nextLine() {
 
 document.getElementById("micBtn").onclick = enableMic;
 document.getElementById("startQRBtn").onclick = startQRScanner;
+document.getElementById("testRecBtn").onclick = manualTestRecognition;
 document.getElementById("playPauseBtn").onclick = () => {
   if (timer) {
     clearInterval(timer);

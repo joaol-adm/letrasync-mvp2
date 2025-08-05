@@ -1,4 +1,4 @@
-const CACHE = "letrasync-v23.2";
+const CACHE = "letrasync-v23.6";
 self.addEventListener("install", e => {
   e.waitUntil(
     caches.open(CACHE).then(cache => cache.addAll([
