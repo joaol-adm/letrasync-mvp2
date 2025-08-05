@@ -1,11 +1,12 @@
-# LetraSync Karaokê PWA v23.6
+# LetraSync Karaokê PWA v23.8
 
 Versão com:
 - Botão de microfone
 - Status do microfone (Inativo / Aguardando / Captando)
 - Barra de volume
-- Log visual com mensagens de status, erros e palavras reconhecidas em tempo real
-- Botão "📝 Testar Reconhecimento" para teste manual do modelo
+- Log visual com mensagens de status e progresso de carregamento do modelo
+- Barra de progresso visual do carregamento
+- Botão "📝 Testar Reconhecimento" só habilitado após modelo carregado
 - Círculo pulsante no canto superior direito
 - Sincronização experimental baseada em palavras com sensibilidade ajustável
 - Botão Reiniciar que volta para primeira linha

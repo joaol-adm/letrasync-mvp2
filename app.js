@@ -1,14 +1,19 @@
 const currentModel = "vosk-model-en";
 let lyrics = [], currentLine = 0, timer = null, interval = 3000;
-let audioContext, analyser, microphone, dataArray, recognizer, model;
+let audioContext, analyser, microphone, dataArray, recognizer = null, model = null;
 let sensitivityThreshold = 5;
 let html5QrCode;
+let modelReady = false;
 
 const lyricsEl = document.getElementById("lyrics");
 const volumeMeter = document.getElementById("volumeMeter");
 const micStatus = document.getElementById("micStatus");
 const logStatus = document.getElementById("logStatus");
 const beatCircle = document.getElementById("beatCircle");
+const testRecBtn = document.getElementById("testRecBtn");
+const progressContainer = document.getElementById("progressContainer");
+const progressBar = document.getElementById("progressBar");
+const progressText = document.getElementById("progressText");
 
 function logMessage(msg) {
   logStatus.textContent += "\n" + msg;
@@ -27,18 +32,39 @@ async function enableMic() {
     microphone = audioContext.createMediaStreamSource(stream);
     microphone.connect(analyser);
     dataArray = new Uint8Array(analyser.frequencyBinCount);
-    micStatus.textContent = "🎤 Microfone ativo - aguardando modelo...";
-    logMessage("📦 Carregando modelo...");
-    if (!model) {
-      model = await Vosk.createModel(`./${currentModel}/`);
-      recognizer = new model.Recognizer();
-      logMessage("✅ Modelo carregado!");
-    }
+    micStatus.textContent = "🎤 Microfone ativo - iniciando modelo...";
+    logMessage("📦 Iniciando carregamento do modelo...");
+    showProgress(0);
+    loadModel();
     processMic();
-    startRecognitionTest();
   } catch (e) {
     micStatus.textContent = "❌ Erro ao acessar microfone";
     logMessage("Erro: " + e.message);
+  }
+}
+
+function showProgress(percent) {
+  progressContainer.style.display = "block";
+  progressBar.style.width = percent + "%";
+  progressText.textContent = "Carregando modelo: " + percent + "%";
+}
+
+async function loadModel() {
+  try {
+    for (let p = 0; p <= 100; p += 10) {
+      showProgress(p);
+      await new Promise(r => setTimeout(r, 200));
+    }
+    model = await Vosk.createModel(`./${currentModel}/`);
+    recognizer = new model.Recognizer();
+    modelReady = true;
+    testRecBtn.disabled = false;
+    micStatus.textContent = "✅ Modelo carregado!";
+    logMessage("✅ Modelo carregado com sucesso!");
+    progressContainer.style.display = "none";
+  } catch (err) {
+    micStatus.textContent = "❌ Erro ao carregar modelo";
+    logMessage("Erro ao carregar modelo: " + err.message);
   }
 }
 
@@ -49,37 +75,23 @@ function processMic() {
   let volume = sum / dataArray.length;
   volumeMeter.style.width = Math.min(100, volume * 5) + "%";
   if (volume > 5) {
-    micStatus.textContent = "🎤 Captando áudio...";
+    micStatus.textContent = modelReady ? "🎤 Captando áudio..." : "⏳ Aguardando modelo...";
     beatCircle.classList.add("active");
     setTimeout(() => beatCircle.classList.remove("active"), 100);
   } else {
-    micStatus.textContent = "⏳ Aguardando som...";
+    micStatus.textContent = modelReady ? "⏳ Aguardando som..." : "⏳ Aguardando modelo...";
   }
   requestAnimationFrame(processMic);
 }
 
-function startRecognitionTest() {
-  logMessage("🔍 Teste de reconhecimento iniciado...");
-  setInterval(() => {
-    try {
-      const textResult = recognizer.result().text;
-      if (textResult) {
-        logMessage("Reconhecido: " + textResult);
-      }
-    } catch (err) {
-      logMessage("Erro no reconhecimento: " + err.message);
-    }
-  }, 2000);
-}
-
 function manualTestRecognition() {
+  if (!modelReady || !recognizer) {
+    logMessage("⚠️ Modelo não carregado - teste indisponível.");
+    return;
+  }
   try {
     const textResult = recognizer.result().text;
-    if (textResult) {
-      logMessage("📝 Teste Manual: " + textResult);
-    } else {
-      logMessage("📝 Teste Manual: Nenhum texto reconhecido");
-    }
+    logMessage("📝 Teste Manual: " + (textResult || "[Nenhum texto reconhecido]"));
   } catch (err) {
     logMessage("Erro no teste manual: " + err.message);
   }
@@ -131,7 +143,7 @@ function nextLine() {
 
 document.getElementById("micBtn").onclick = enableMic;
 document.getElementById("startQRBtn").onclick = startQRScanner;
-document.getElementById("testRecBtn").onclick = manualTestRecognition;
+testRecBtn.onclick = manualTestRecognition;
 document.getElementById("playPauseBtn").onclick = () => {
   if (timer) {
     clearInterval(timer);
