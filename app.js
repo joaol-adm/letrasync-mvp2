@@ -7,8 +7,13 @@ let modelReady = false;
 
 const requiredFiles = [
   "conf/mfcc.conf",
-  "am/final.mdl",
-  "graph/HCLG.fst"
+  "am/final.mdl"
+];
+
+const graphFiles = [
+  "graph/HCLG.fst",
+  "graph/HCLr.fst",
+  "graph/Gr.fst"
 ];
 
 const lyricsEl = document.getElementById("lyrics");
@@ -56,20 +61,30 @@ function showProgress(percent, text) {
 
 async function validateModel() {
   let allFound = true;
+  // Verificação de arquivos obrigatórios
   for (const file of requiredFiles) {
-    try {
-      const res = await fetch(`./${currentModel}/${file}`);
-      if (!res.ok) {
-        logMessage(`⚠️ ${file} Faltando`);
-        allFound = false;
-      } else {
-        logMessage(`✅ ${file} OK`);
-      }
-    } catch {
-      logMessage(`⚠️ ${file} Erro ao verificar`);
+    const res = await fetch(`./${currentModel}/${file}`);
+    if (!res.ok) {
+      logMessage(`⚠️ ${file} Faltando`);
       allFound = false;
+    } else {
+      logMessage(`✅ ${file} OK`);
     }
   }
+  // Verificação de arquivos de grafo (aceita qualquer um)
+  let graphFound = false;
+  for (const gfile of graphFiles) {
+    const gres = await fetch(`./${currentModel}/${gfile}`);
+    if (gres.ok) {
+      logMessage(`✅ ${gfile} OK`);
+      graphFound = true;
+    }
+  }
+  if (!graphFound) {
+    logMessage("⚠️ Nenhum grafo válido encontrado (HCLG/HCLr/Gr)");
+    allFound = false;
+  }
+
   if (!allFound) {
     micStatus.textContent = "❌ Modelo incompleto";
     logMessage("❌ Modelo incompleto - verifique arquivos");

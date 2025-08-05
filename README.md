@@ -1,8 +1,8 @@
-# LetraSync Karaokê PWA v24
+# LetraSync Karaokê PWA v24.1
 
 Versão com:
-- Diagnóstico detalhado do modelo
-- Lista de arquivos essenciais com status OK/Faltando
+- Diagnóstico de modelo aceita HCLG.fst, HCLr.fst ou Gr.fst
+- Loga qual arquivo de grafo foi encontrado
 - Botão de microfone
 - Status do microfone
 - Barra de volume
